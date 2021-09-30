@@ -1,5 +1,4 @@
-
-### libraries ###
+# Load packages --------------------------------------------------
 library(tidyverse)
 library(sf)
 library(stars)
@@ -9,10 +8,14 @@ library(raster)
 
 library(httr)
 
-## import shapefile of roads in NL
+library(rgdal)
+
+# Load data ------------------------------------------------------
+
+## Load shapefile of all roads in NL (Nationaal Wegen Bestand (NWB))
 roads_nl <- st_read("data/nwbwegen/geogegevens/shapefile/nederland_totaal/wegvakken/wegvakken.shp")
 
-## filter for the municipality (gme_naam) and road (stt_name) we are interested in
+## Filter for municipality (gme_naam) and road (stt_name) we are interested in
 street <- 
   roads_nl %>% 
   filter(
@@ -20,7 +23,7 @@ street <-
     stt_naam == "Einsteindreef"
   )
 
-# create 300m region of interest
+## Create 300m region of interest
 street_roi <- 
   street %>% 
   st_geometry() %>% 
@@ -32,9 +35,12 @@ roads_in_roi <-
   st_filter(street_roi) %>% 
   st_crop(street_roi)
 
-# example of WFS access
+# WFS -----------------------------------------
 
-# get pand from BAG
+# Example of WFS access ------------------------------------------
+
+## Get pand from BAG (Basisregistratie Adressen en Gebouwen)
+
 req <- parse_url("https://geodata.nationaalgeoregister.nl/bag/wfs/v1_1")
 req$query <- list(
   request = "getFeature",
@@ -43,13 +49,14 @@ req$query <- list(
   typenames = "bag:pand",
   srsName = "EPSG:28992",
   bbox    = paste(st_bbox(street_roi), collapse = ","), 
-  startIndex=1001,
-  count=800
+  startIndex = 1001,
+  count = 800
 )
 n_pand <- st_read(build_url(req))
 pand <- st_read(build_url(req))
 
-# get verblijfsobject from BAG
+# Get verblijfsobject from BAG
+
 req <- parse_url("https://geodata.nationaalgeoregister.nl/bag/wfs/v1_1")
 req$query <- list(
   request = "getFeature",
@@ -59,10 +66,11 @@ req$query <- list(
   srsName = "EPSG:28992",
   bbox    = paste(st_bbox(street_roi), collapse = ",")
 )
+
 n_verblijfsobject <- st_read(build_url(req))
 verblijfsobject <- st_read(build_url(req))
 
-### function
+# WFS Function -------------------------------------------------
 
 get_wfs_features <- function(index, bounding_box, wfs_url, featuretype) {
   req <- parse_url(wfs_url)
@@ -77,6 +85,7 @@ get_wfs_features <- function(index, bounding_box, wfs_url, featuretype) {
     startIndex=index,
     count=1000
   )
+  
   gd <- st_read(build_url(req))
   return(gd)
 }
@@ -84,11 +93,13 @@ get_wfs_features <- function(index, bounding_box, wfs_url, featuretype) {
 pand1 <- get_wfs_features(0, street_roi, "https://geodata.nationaalgeoregister.nl/bag/wfs/v1_1", "bag:pand")
 pand2 <- get_wfs_features(1000, street_roi, "https://geodata.nationaalgeoregister.nl/bag/wfs/v1_1", "bag:pand")
 
-### WFS function with pagination
+# WFS function with pagination ---------------------------------
 
 get_panden <- function(index = 0) {
   wfs <- "https://geodata.nationaalgeoregister.nl/bag/wfs/v1_1"
+  
   req <- parse_url(wfs)
+  
   req$query <- list(
     request = "getFeature",
     service = "WFS",
@@ -99,22 +110,49 @@ get_panden <- function(index = 0) {
     startIndex=index,
     count=1000
   )
-  gd <- st_read(build_url(req))
-  return(gd)
+  
+  panden <- st_read(build_url(req))
+  return(panden)
 }
 
-gd <- map_dfr(.x = seq(0, 4000, 1000),
+panden <- map_dfr(.x = seq(0, 4000, 1000),
               .f = get_panden
 )
 
-gd
+panden
+
+# WMS ------------------------------------------------------
+
+# Example of WMS access ------------------------------------
+
+library(leaflet)
+
+# Get geluidsdata from RIVM
+wms_rivm <- "http://geodata.rivm.nl/geoserver/alo/wms?"
+
+wms_geluid <- leaflet() %>% 
+  setView(lng = 5.110368840441155, lat = 52.11727569662975, zoom = 15) %>% 
+  addWMSTiles(
+    wms_rivm,
+    layers = "rivm_20191112_g_geluidkaart_lden_wegverkeer",
+    options = WMSTileOptions(format = "image/png", transparent = TRUE)
+  )
+
+wms_geluid
+
+# WMS function ---------------------------------------------
+
+
+# Map -------------------------------------------------------
 
 ggplot() +
   annotation_map_tile("cartolight", zoom = 15) +
   geom_sf(data = street, colour = "orange", size = 2) +
   geom_sf(data = roads_in_roi, colour = "black", size = 1) +
-  geom_sf(data = gd, fill = "light seagreen") +
+  geom_sf(data = panden, fill = "light seagreen") +
+  #geom_raster(data = test) +
   #geom_sf(data = gd, colour = "blue", size = 0.3) +
   theme_void() +
   annotation_scale(location = "br")
+
 
