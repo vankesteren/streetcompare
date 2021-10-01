@@ -28,9 +28,7 @@ library(cbsodataR)  # CBS data package
 # Downloaden van selectie van data
 # AfstandTotBioscoop_104
 
-voorzieningen <- cbs_get_data("84463NED", 
-                     #WijkenEnBuurten = "GM0344    ",
-                     select = c("Gemeentenaam_1","SoortRegio_2", "WijkenEnBuurten", "AfstandTotBioscoop_104")) 
+voorzieningen <- cbs_get_data("84463NED", select = c("Gemeentenaam_1","SoortRegio_2", "WijkenEnBuurten", "AfstandTotBioscoop_104")) 
 head(voorzieningen)
 
 # koppel CBS buurtcode met Buurtnaam
@@ -85,6 +83,25 @@ ggsave(bios_afs_plot, file = "fig/bios_plot.jpg")
 ## Fix geom_text om buurtnaam in te laden
 ## fix recode/mutate code
 
+
+
+# Erik-Jan doet dit
+
+# stedelijkheid
+buurtstats <- read_sf("data/WijkBuurtkaart_2020_v1/buurt_2020_v1.shp")
+
+# connect stedelijkheid met buurtstatistieken
+sted_df <- 
+  voorzieningen %>% 
+  filter(SoortRegio_2 == "Buurt     ") %>% 
+  mutate(BU_CODE = WijkenEnBuurten) %>% 
+  left_join(buurtstats %>% select(BU_CODE, STED)) %>% 
+  filter(STED == 1) # selecteer alleen stedelijke gebieden zoals overvecht
+
+sted_df %>% 
+  ggplot(aes(x = AfstandTotBioscoop_104)) + 
+  geom_histogram() + 
+  geom_vline(xintercept = median(sted_df$AfstandTotBioscoop_104, na.rm = TRUE))
 
 ########################################
 # old code inladen van tabel
