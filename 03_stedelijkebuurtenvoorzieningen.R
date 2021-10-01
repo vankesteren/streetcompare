@@ -1,8 +1,6 @@
 library(tidyverse)
 library(sf)
 library(cbsodataR)
-library(ggrepel)
-library(firatheme)
 
 # voorzieningen totaal
 voorzieningen_nabijheid <- cbs_get_data("84463NED")
