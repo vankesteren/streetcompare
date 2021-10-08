@@ -3,4 +3,5 @@
 .RData
 .Ruserdata
 data/nwbwegen/*
+data/Bron/*
 rosm.cache/*
