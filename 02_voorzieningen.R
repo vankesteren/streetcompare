@@ -6,11 +6,11 @@
 # https://www.utrecht.nl/fileadmin/uploads/documenten/wonen-en-leven/wijken/wijk-overvecht/plattegrond-Overvecht-met-buurtindeling.jpg
 
 # Buurten Einstendreef
-# CBS buurtcode buurtnaam
-# BU03440321 Zamenhofdreef en omgeving
-# BU03440322 Neckardreef en omgeving
-# BU03440331 Vechtzoom-zuid
-# BU03440341 Zambesidreef en omgeving
+# CBS buurtcode   Buurtnaam
+# BU03440321      Zamenhofdreef en omgeving
+# BU03440322      Neckardreef en omgeving
+# BU03440331      Vechtzoom-zuid
+# BU03440341      Zambesidreef en omgeving
 
 # Load packages
 library(httr)
@@ -19,7 +19,7 @@ library(tidyverse)
 library(ggplot2)
 library(sf)
 library(stars)
-library(ggspatial)
+#library(ggspatial)
 #library(raster)
 #library(rjson)
 library(cbsodataR)  # CBS data package
@@ -34,6 +34,11 @@ head(voorzieningen)
 # koppel CBS buurtcode met Buurtnaam
 
 # filter voor Urecht en alleen buurten
+
+voorzieningen_nl <- voorzieningen %>%
+  filter(
+    str_detect(SoortRegio_2, "Buurt")
+  )
 
 utrecht_bios <- voorzieningen %>%
   filter(
@@ -62,7 +67,7 @@ einsteindreef_buurten$AfstandTotBioscoop_104 <- c(einsteindreef_buurten$AfstandT
 #                                    "BU03440341" = "Zambesidreef"))
 
 
-bios_afs_plot <-
+utr_bios_afs_plot <-
   ggplot(utrecht_bios, aes(x = AfstandTotBioscoop_104)) + 
   geom_histogram(binwidth = 0.5, colour = "darkblue", fill="lightblue") +
   geom_vline(data = einsteindreef_buurten, aes(xintercept= AfstandTotBioscoop_104, colour = WijkenEnBuurten), linetype = "solid", show.legend = FALSE) +
@@ -71,19 +76,35 @@ bios_afs_plot <-
   geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[1], 22), label = "Zamenhofdreef", colour = "orange", angle = 45) +
   geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[2], 15), label = "Neckardreef",  colour = "darkgreen", vjust = 1, angle = 45) +
   geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[3], 17), label = "Vechtzoom-zuid", colour = "darkgreen", vjust = 1, angle = 45) +
-  geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[4], 22), label = "Zambesidreef", colour = "purple", vjust = 1, angle = 45) +
+  geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[4], 23), label = "Zambesidreef", colour = "purple", vjust = 1, angle = 45) +
   ylim(0, 25) +
   labs(x = "Afstand tot bioscoop (km)", y = "Aantal") +
   theme_minimal()
 
+utr_bios_afs_plot
+ggsave(utr_bios_afs_plot, file = "fig/utrect_bios_plot.jpg")
+
+## Nederland, alleen buurten
+bios_afs_plot <-
+  ggplot(voorzieningen_nl, aes(x = AfstandTotBioscoop_104)) + 
+  geom_histogram(binwidth = 2, colour = "darkblue", fill="lightblue") +
+  geom_vline(data = einsteindreef_buurten, aes(xintercept= AfstandTotBioscoop_104, colour = WijkenEnBuurten), linetype = "solid", show.legend = FALSE) +
+  #geom_label(aes(3.3, 20), label = "Einsteindreef", vjust = 0) +
+  #geom_text(data = einsteindreef_buurten, aes(label = c(WijkenEnBuurten), y = 23), angle = 45) +
+  geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[1], 2000), label = "Zamenhofdreef", colour = "orange", angle = 45) +
+  geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[2], 2200), label = "Neckardreef",  colour = "darkgreen", vjust = 1, angle = 45) +
+  geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[3], 2400), label = "Vechtzoom-zuid", colour = "darkgreen", vjust = 1, angle = 45) +
+  geom_text(aes(einsteindreef_buurten$AfstandTotBioscoop_104[4], 2600), label = "Zambesidreef", colour = "purple", vjust = 1, angle = 45) +
+  #ylim(0, 25) +
+  labs(x = "Afstand tot bioscoop (km)", y = "Aantal") +
+  theme_minimal()
+
 bios_afs_plot
-ggsave(bios_afs_plot, file = "fig/bios_plot.jpg")
+ggsave(bios_afs_plot, file = "fig/nl_bios_plot.jpg")
 
 ## TODO: 
 ## Fix geom_text om buurtnaam in te laden
 ## fix recode/mutate code
-
-
 
 # Erik-Jan doet dit
 
@@ -93,15 +114,16 @@ buurtstats <- read_sf("data/WijkBuurtkaart_2020_v1/buurt_2020_v1.shp")
 # connect stedelijkheid met buurtstatistieken
 sted_df <- 
   voorzieningen %>% 
-  filter(SoortRegio_2 == "Buurt     ") %>% 
+  dplyr::filter(SoortRegio_2 == "Buurt     ") %>% 
   mutate(BU_CODE = WijkenEnBuurten) %>% 
-  left_join(buurtstats %>% select(BU_CODE, STED)) %>% 
-  filter(STED == 1) # selecteer alleen stedelijke gebieden zoals overvecht
+  left_join(buurtstats %>% dplyr::select(BU_CODE, STED)) %>% 
+  dplyr::filter(STED == 1) # selecteer alleen stedelijke gebieden zoals overvecht
 
 sted_df %>% 
   ggplot(aes(x = AfstandTotBioscoop_104)) + 
   geom_histogram() + 
   geom_vline(xintercept = median(sted_df$AfstandTotBioscoop_104, na.rm = TRUE))
+
 
 ########################################
 # old code inladen van tabel
