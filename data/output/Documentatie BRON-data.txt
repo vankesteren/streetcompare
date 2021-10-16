@@ -1,0 +1,20 @@
+Documentatie over inhoud in ongevallen bestand
+(Gekopieerd van "Handleiding product Bestand geRegistreerde Ongevallen  Nederland (BRON)")
+
+VKL_NUMMER - 	Unieke identificatie van het verkeersongeval, waarbij de partij betrokken is
+JAAR_VKL - 	Jaar waarin het verkeersongeval heeft plaatsgevonden
+GME_ID -		Unieke identificatie van de gemeente waarin conform de in het BN actuele gemeentegrenzen het verkeersongeval heeft plaatsgevonden
+GME_NAAM -	Naam van de gemeente waarin conform de in het BN actuele gemeentegrenzen het verkeersongeval heeft plaatsgevonden
+X_COORD - 	De x-coördinaat van een puntlocatie, in verschoven rijksdriehoekmeting
+Y_COORD - 	De y-coördinaat van een puntlocatie, in verschoven rijksdriehoekmeting
+geometry - 	simple feature linestring
+ANTL_PTJ - 	Het aantal partijen betrokken bij het verkeersongeval
+OTE_OMS - 	Omschrijving van een objecttype (OTE_ID)
+AP3_OMS - 	Omschrijving van een afloop 3 categorieën (AP3_ID)
+AOL_OMS - 	Omschrijving van een aard ongeval
+NIVEAUKOP - 	Aanduiding op welk niveau het verkeersongeval gekoppeld is aan het NWB (voor uitleg zie bijlage A):
+	E = Ongeval exact gekoppeld aan NWB
+	K = Ongeval gekoppeld op kruispuntniveau
+	S = Ongeval gekoppeld op straatniveau
+	G = Ongeval gekoppeld op gemeente niveau
+	*De laatste (G) is niet zo relevant om te gebruiken omdat het niet nauwkeurig genoeg is
