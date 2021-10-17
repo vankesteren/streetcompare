@@ -1,6 +1,7 @@
 library(cbsodataR)
 library(tidyverse)
 library(sf)
+library(forcats)
 
 ################################################################################
 #1. Introductie data
@@ -112,17 +113,34 @@ buurteneinstein = c("BU03440341",
                     "BU03440331",
                     "BU03440321")
 
-einstein =data2 %>%
-  ggplot + 
-  geom_sf(aes(geometry = geometry),
-          fill = ifelse(data2$WijkenEnBuurten %in% buurtenoverig, 
-                        'navajowhite3', 
-                        ifelse(data2$WijkenEnBuurten %in% buurteneinstein, 
-                               'orangered', 
-                               'seashell1'))) +
-  scale_fill_viridis_c() +
+
+my_palette = c("orangered4","orangered","orange2","seagreen4","navajowhite","seashell1")  
+
+einstein_df <- data2 %>% 
+  mutate(wijk_colour = case_when(
+    WijkenEnBuurten %in% buurtenoverig ~ "Overvecht",
+    WijkenEnBuurten == buurteneinstein[1] ~ data2[data2$WijkenEnBuurten == buurteneinstein[1], "statnaam"] %>% pull(),
+    WijkenEnBuurten == buurteneinstein[2] ~ data2[data2$WijkenEnBuurten == buurteneinstein[2], "statnaam"] %>% pull(),
+    WijkenEnBuurten == buurteneinstein[3] ~ data2[data2$WijkenEnBuurten == buurteneinstein[3], "statnaam"] %>% pull(),
+    WijkenEnBuurten == buurteneinstein[4] ~ data2[data2$WijkenEnBuurten == buurteneinstein[4], "statnaam"] %>% pull(),
+    TRUE ~ "Utrecht"
+    )) %>%
+  mutate(wijk_colour = factor(wijk_colour)) %>%
+  mutate(wijk_colour = fct_relevel(wijk_colour, data2[data2$WijkenEnBuurten == buurteneinstein[1], "statnaam"] %>% pull(),
+                                   data2[data2$WijkenEnBuurten == buurteneinstein[2], "statnaam"] %>% pull(),
+                                   data2[data2$WijkenEnBuurten == buurteneinstein[3], "statnaam"] %>% pull(),
+                                   data2[data2$WijkenEnBuurten == buurteneinstein[4], "statnaam"] %>% pull(),
+                                   "Overvecht",
+                                   "Utrecht"))
+
+
+einstein = einstein_df %>%
+  ggplot +
+  geom_sf(aes(geometry = geometry, fill = wijk_colour)) +
   labs(title = "De buurten bij de Einsteindreef", fill = "") +
+  scale_fill_manual(values = my_palette) +
   theme_void()
+
 
 einstein
 ggsave(einstein, file = "fig/3_Einstein.jpg")
