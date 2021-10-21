@@ -165,53 +165,26 @@ ggsave(einstein, file = "fig/3_Einstein.jpg")
 
 # Kaartje maken van alle buurten met stedelijk=1
 
-# heel NL inladen
-data <- cbs_get_data("84463NED", 
-                     select=c("Gemeentenaam_1","SoortRegio_2", "WijkenEnBuurten", "AfstandTotBioscoop_104")) %>%
-  mutate(WijkenEnBuurten = str_trim(WijkenEnBuurten),
-         Gemeentenaam_1 = str_trim(Gemeentenaam_1))
-
-# buurtstats aan koppelen
-buurtstats <- read_sf("data/WijkBuurtkaart_2020_v1/buurt_2020_v1.shp")
-
-# combinen
-data3 <- 
-  data %>%
-  left_join(buurtstats, by = c(WijkenEnBuurten = "BU_CODE")) # %>%
-  #filter(SoortRegio_2 == "Buurt     ")
-
-# plot alle stedelijkheid = 1 
-stedelijk = data3 %>%
-  ggplot + 
-  geom_sf(aes(geometry = geometry),  
-          fill = ifelse(data3$STED == 1, "orangered", "navajowhite3"), colour = NA) +
-  scale_fill_viridis_c() +
-  labs(title = "Stedelijke wijken in Nederland", fill = "") +
-  theme_void()
-
-stedelijk
-ggsave(stedelijk, file = "fig/4_Stedelijk.jpg")
-
-# plot de verdeling van stedelijkheid over Nederland
+# data inladen
+buurt <- read_sf("data/WijkBuurtkaart_2020_v1/buurt_2020_v1.shp")
+provs <- read_sf("WFS:https://geodata.nationaalgeoregister.nl/cbsgebiedsindelingen/wfs", layer = "cbs_provincie_2020_gegeneraliseerd")
 
 
-data4 = data3 %>%
-  dplyr::select(STED, AfstandTotBioscoop_104, geometry) %>%
-  mutate(STED = na_if(STED, -99999999))
+buurt <- buurt %>% filter(STED >= 0)
 
-data4$STED = factor(data4$STED)
-my_palette = c("orangered4","orangered","navajowhite4","navajowhite3","navajowhite")  
+# plot alle stedelijkheid 
+plot_stedelijkheid <- 
+  ggplot() +
+  geom_sf(data = buurt, aes(fill = STED), colour = NA) + 
+  geom_sf(data = provs, fill = "transparent", colour = "white") +
+  scale_fill_gradient(high = "lightblue", low = "orangered", guide = "none") + 
+  theme_minimal()
+ggsave(plot_stedelijkheid, file = "fig/4_stedelijkheid_all.png", width = 7, height = 9, bg = "white")
 
-
-stedelijkheid = data4 %>%
-  drop_na(STED) %>%
-  ggplot +
-  geom_sf(aes(fill=STED, geometry = geometry), color=NA) +
-  scale_fill_manual(values=my_palette) +
-  labs(title = "Stedelijkheid per wijk in Nederland", fill = "") +
-  theme_void()
-
-stedelijkheid
-ggsave(stedelijkheid, file = "fig/5_Stedelijkheid.jpg")
-                                 
-                                 
+# plot alleen de meest stedelijke gebieden
+plot_stedelijkheid <- 
+  ggplot() +
+  geom_sf(data = provs, fill = "seagreen2", colour = "white") +
+  geom_sf(data = buurt %>% filter(STED == 1), fill = "orangered", colour = NA) + 
+  theme_minimal()
+ggsave(plot_stedelijkheid, file = "fig/4_stedelijkheid.png", width = 7, height = 9, bg = "white")
