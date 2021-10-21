@@ -182,9 +182,9 @@ plot_stedelijkheid <-
 ggsave(plot_stedelijkheid, file = "fig/4_stedelijkheid_all.png", width = 7, height = 9, bg = "white")
 
 # plot alleen de meest stedelijke gebieden
-plot_stedelijkheid <- 
+plot_stedelijk_only <- 
   ggplot() +
-  geom_sf(data = provs, fill = "seagreen2", colour = "white") +
+  geom_sf(data = provs, fill = "transparent") +
   geom_sf(data = buurt %>% filter(STED == 1), fill = "orangered", colour = NA) + 
   theme_minimal()
-ggsave(plot_stedelijkheid, file = "fig/4_stedelijkheid.png", width = 7, height = 9, bg = "white")
+ggsave(plot_stedelijk_only, file = "fig/4_stedelijkheid.png", width = 7, height = 9, bg = "white")
