@@ -62,6 +62,7 @@ for (b in 1:nrow(bios_2)) {
 bios_2$bevolking <- bev
 bios_2$oad       <- oad
 
+write_rds(bios_2, "data/output/bios.rds")
 
 # plot
 bios_hist <- 
